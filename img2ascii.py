@@ -1,13 +1,20 @@
-import numpy as np
+"""
+Python file for Converter Class for converting image to ASCII characters.
+"""
+
+import cairo
 import cv2
+import numpy as np
 import os
 import time
-import cairo
-from utils import bcolors
+
+from helper import bcolors
 
 
 class IMG2ASCIIConverter:
-    """A class for converting an image to ASCII characters."""
+    """
+    A class for converting an image to ASCII characters.
+    """
 
     def __init__(self) -> None:
         # Image stuff
@@ -105,7 +112,7 @@ class IMG2ASCIIConverter:
         """
         # Do nothing if no image is in yet
         if self.image_array is None:
-            print(f"{bcolors.WARNING}[!] No image has been loaded yet ._. {bcolors.ENDC}\n")
+            print(f"{bcolors.WARNING}[!] No image has been loaded yet .ᴗ. {bcolors.ENDC}\n")
             return False
 
         print(f"{bcolors.WARNING}[!] Press any button to continue >-< {bcolors.ENDC}\n")
@@ -205,42 +212,6 @@ class IMG2ASCIIConverter:
 
         return True
 
-    def write_to_image_file(self, image_file_path: str="", extension: str=""):
-        """
-        Writes the created image to the file path specified.
-
-        If not path is provided, the output path will be the original image path name with _ascii inserted.
-
-        If extension is given, image file path's extension will be changed to the one provided.
-
-        Returns True if write succesful.
-        """
-        # Check if there is a image file path
-        if image_file_path == "":
-            root, ext = os.path.splitext(self.image_path)
-            image_file_path = root + "_ascii" + ext
-
-        # Add extension if given, otherwise will just use image_file_path
-        if extension != "":
-            image_file_path = os.path.splitext(image_file_path)[0] + "." + extension
-        
-        # Check if there is anything to write
-        if self.ascii_image_array is None:
-            print(f"{bcolors.WARNING}[!] Nothing to write when saving image, try create image first ╯︿╰ {bcolors.ENDC}\n")
-            return False
-
-        print(f"{bcolors.WARNING}[!] Writing to image file of path {image_file_path} :3 {bcolors.ENDC}\n")
-
-        try:
-            cv2.imwrite(image_file_path, self.ascii_image_array)
-        except:
-            print(f"{bcolors.WARNING}[-] Something went wrong when writing image, and I don't know why 𓁹‿𓁹 {bcolors.ENDC}\n")
-            return False
-
-        print(f"{bcolors.WARNING}[+] Finished writing to image file of path {image_file_path} ·▽· {bcolors.ENDC}\n")
-        
-        return True
-
     def create_image(self, upscale: int=1):
         """
         Creates image from `self.image_ascii_chars`, 
@@ -299,6 +270,42 @@ class IMG2ASCIIConverter:
         # Resize it to original width and height (difference shouldn't be much, ig)
         image_array = cv2.resize(image_array, (self.original_width, self.original_height), interpolation=cv2.INTER_AREA)
         self.ascii_image_array = image_array
+        return True
+
+    def write_to_image_file(self, image_file_path: str="", extension: str=""):
+        """
+        Writes the created image to the file path specified.
+
+        If not path is provided, the output path will be the original image path name with _ascii inserted.
+
+        If extension is given, image file path's extension will be changed to the one provided.
+
+        Returns True if write succesful.
+        """
+        # Check if there is a image file path
+        if image_file_path == "":
+            root, ext = os.path.splitext(self.image_path)
+            image_file_path = root + "_ascii" + ext
+
+        # Add extension if given, otherwise will just use image_file_path
+        if extension != "":
+            image_file_path = os.path.splitext(image_file_path)[0] + "." + extension
+        
+        # Check if there is anything to write
+        if self.ascii_image_array is None:
+            print(f"{bcolors.WARNING}[!] Nothing to write when saving image, try create image first ╯︿╰ {bcolors.ENDC}\n")
+            return False
+
+        print(f"{bcolors.WARNING}[!] Writing to image file of path {image_file_path} :3 {bcolors.ENDC}\n")
+
+        try:
+            cv2.imwrite(image_file_path, self.ascii_image_array)
+        except:
+            print(f"{bcolors.WARNING}[-] Something went wrong when writing image, and I don't know why 𓁹‿𓁹 {bcolors.ENDC}\n")
+            return False
+
+        print(f"{bcolors.WARNING}[+] Finished writing to image file of path {image_file_path} ·▽· {bcolors.ENDC}\n")
+        
         return True
 
 if __name__ == "__main__":
