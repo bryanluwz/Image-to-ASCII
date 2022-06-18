@@ -159,7 +159,20 @@ class IMG2ASCIIConverter:
         self.scale_image_by_ratio(scale_ratio, scale_ratio)
 
         return self.image_array
+
+    def _scale_ascii_image_for_output(self, target_w: int=1280, target_h:int=720):
+        """
+        Scale image to resolution nearest to 1920 x 1080. ASCII image should already be generated.
+
+        Shouldn't be called outside class.
+        """
+        scale_ratio = max((target_w / self.original_width), (target_h / self.original_height))
+
+        self.ascii_image_array = cv2.resize(self.ascii_image_array, (int(self.original_width * scale_ratio), int(self.original_height * scale_ratio)), interpolation=cv2.INTER_AREA)
+
+        return self.ascii_image_array
         
+
     def create_text(self, gscale_level: int=0, max_bit_value: int=256, min_bit_value: int=0):
         """
         Set `self.image_ascii_chars` to the ASCII characters created from `self.image_array` and return it.
@@ -261,15 +274,19 @@ class IMG2ASCIIConverter:
         self.cairo_context.set_source_rgb(0, 0, 0)
 
         for i, line in enumerate(lines.split('\n')):
-            self.cairo_context.move_to(0, self.line_height * (i + 1) * self.CANVAS_HEIGHT_INCREASE_PERCENTAGE * self.LINE_HEIGHT_INCREASE_PERCENTAGE)
+            self.cairo_context.move_to(0, self.line_height * (i + 0.5) * self.CANVAS_HEIGHT_INCREASE_PERCENTAGE * self.LINE_HEIGHT_INCREASE_PERCENTAGE)
             self.cairo_context.show_text(line)
 
         # Create array from Cairo context
-        image_array = np.ndarray(shape=(self.canvas_height, self.canvas_width, 4), dtype=np.uint8, buffer=self.cairo_context_surface.get_data())
+        self.ascii_image_array = np.ndarray(shape=(self.canvas_height, self.canvas_width, 4), dtype=np.uint8, buffer=self.cairo_context_surface.get_data())
         
-        # Resize it to original width and height (difference shouldn't be much, ig)
-        image_array = cv2.resize(image_array, (self.original_width, self.original_height), interpolation=cv2.INTER_AREA)
-        self.ascii_image_array = image_array
+        # We would scale the output to the original size, except for when the original size is too smol
+        # Then we will esize it to to around 1280x720, find whichever resolution is closest
+        if self.original_width > 800 or self.original_height > 600:
+            self.ascii_image_array = cv2.resize(self.ascii_image_array, (self.original_width, self.original_height), interpolation=cv2.INTER_AREA)
+        else:
+            self._scale_ascii_image_for_output()
+
         return True
 
     def write_to_image_file(self, image_file_path: str="", extension: str=""):
@@ -313,7 +330,6 @@ if __name__ == "__main__":
 
     converter = IMG2ASCIIConverter()
     # converter.set_image("ඞ.png")
-    converter.set_image("test_folder/rick_astley.png")
     converter.set_ascii_chars_count(200, 200)
     converter.scale_image()
     converter.create_text()
@@ -321,4 +337,4 @@ if __name__ == "__main__":
     converter.write_to_text_file()
     converter.write_to_image_file()
     
-    print(f"Wow all that took {time.time() - t0:.3f}s")
+    print(f"{bcolors.WARNING}Wow all that took {(time.time() - t0):.2f}s {bcolors.ENDC}\n")

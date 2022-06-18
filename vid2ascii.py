@@ -38,6 +38,7 @@ class VID2ASCIIConverter:
         self.converter_video_frames_buffer = [None] * self.VIDEO_WRITER_REPEAT_CYCLE
 
         # Quality of Life update
+        # TODO: how to find estimated time remaining, wait this is not Google
         self.previous_five_time = np.ones(shape=(5))
         
     def init_image_to_ascii_converter(self, horizontal: int=100, vertical: int=100):
@@ -187,5 +188,5 @@ if __name__ == "__main__":
     converter.set_video("./test_folder/rick_roll.mp4")
     converter.init_image_to_ascii_converter(200, 200)
     converter.create_video()
-    
+
     print(f"{bcolors.WARNING}Wow all that took {(time.time() - t0):.2f}s {bcolors.ENDC}\n")
