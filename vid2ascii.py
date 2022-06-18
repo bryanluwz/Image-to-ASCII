@@ -39,7 +39,8 @@ class VID2ASCIIConverter:
 
         # Quality of Life update
         # TODO: how to find estimated time remaining, wait this is not Google
-        self.previous_five_time = np.ones(shape=(5))
+        self.MOVING_AVERAGE_COUNT = 10
+        self.previous_five_time = np.ones(shape=(self.MOVING_AVERAGE_COUNT))
         
     def init_image_to_ascii_converter(self, horizontal: int=100, vertical: int=100):
         """
@@ -111,7 +112,7 @@ class VID2ASCIIConverter:
 
             # Save to frame buffer, and update time in 5 cycle moving average of time taken
             self.converter_video_frames_buffer[i % self.VIDEO_WRITER_REPEAT_CYCLE] = self.image_to_ascii_converter.ascii_image_array
-            self.previous_five_time[i % 5] = time.time() - t0
+            self.previous_five_time[i % self.MOVING_AVERAGE_COUNT] = time.time() - t0
 
             # Every fifty cycle append frame to output video, then clear buffer
             if i % self.VIDEO_WRITER_REPEAT_CYCLE == 49:
@@ -163,9 +164,9 @@ class VID2ASCIIConverter:
         Create video writer, shouldn't be called outside of class.
         """
         if write_as_temp:
-            self.video_writer = imageio.get_writer(self.temp_video_output_path, fps=self.fps)
+            self.video_writer = imageio.get_writer(self.temp_video_output_path, fps=self.fps, codec='libx265')
         else:
-            self.video_writer = imageio.get_writer(self.video_output_path, fps=self.fps)
+            self.video_writer = imageio.get_writer(self.video_output_path, fps=self.fps, codec='libx265')
 
     def add_original_audio(self, del_temp=True):
         print(f"{bcolors.WARNING}[!] Adding audio to video file of path {self.video_output_path} ◑﹏◐ {bcolors.ENDC}\n")
@@ -173,7 +174,7 @@ class VID2ASCIIConverter:
         video_clip = VideoFileClip(self.temp_video_output_path)
         audio_clip = AudioFileClip(self.video_path)
         video_clip = video_clip.set_audio(audio_clip)
-        video_clip.write_videofile(self.video_output_path)
+        video_clip.write_videofile(self.video_output_path, ffmpeg_params=['-crf', '24'])
 
         if del_temp:
             os.remove(self.temp_video_output_path)
@@ -185,7 +186,6 @@ if __name__ == "__main__":
 
     converter = VID2ASCIIConverter()
     # converter.set_video("ඞ.mp4")
-    converter.set_video("./test_folder/rick_roll.mp4")
     converter.init_image_to_ascii_converter(200, 200)
     converter.create_video()
 
