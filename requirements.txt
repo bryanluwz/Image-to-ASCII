@@ -1,0 +1,6 @@
+imageio==2.9.0
+imageio_ffmpeg==0.4.3
+moviepy==1.0.3
+numpy==1.19.5
+opencv_python==4.6.0.66
+pycairo==1.21.0

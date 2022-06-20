@@ -5,6 +5,7 @@ Python file for Converter Class for converting Video to ASCII characters.
 import cv2
 import os
 import imageio
+from imageio_ffmpeg import get_ffmpeg_exe
 import numpy as np
 import shutil
 from moviepy.editor import VideoFileClip, AudioFileClip
@@ -36,11 +37,6 @@ class VID2ASCIIConverter:
         self.temp_video_output_path = "./out.mp4"
         self.VIDEO_WRITER_REPEAT_CYCLE = 50  # Video writer will write frames to output every ?? frames
         self.converter_video_frames_buffer = [None] * self.VIDEO_WRITER_REPEAT_CYCLE
-
-        # Quality of Life update
-        # TODO: how to find estimated time remaining, wait this is not Google
-        self.MOVING_AVERAGE_COUNT = 10
-        self.previous_five_time = np.ones(shape=(self.MOVING_AVERAGE_COUNT))
         
     def init_image_to_ascii_converter(self, horizontal: int=100, vertical: int=100):
         """
@@ -72,13 +68,17 @@ class VID2ASCIIConverter:
         self.total_frame_count = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
         root, ext = os.path.splitext(video_path)
-        self.video_output_path = root + "_ascii" + ext
+        self.video_output_path = (root + "_ascii" + ext).replace(" ", "_")  # No spaces
         
         return True
 
-    def create_video(self, gscale_level: int=0):
+    def create_video(self, gscale_level: int=0, compression_speed="slower", add_original_audio=True):
         """
-        Create video of ASCII characters from frame
+        Create video of ASCII characters from frame.
+
+        @param compression_speed: Choose from 
+        ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo.
+        The slower the better the compression.
         """
         # Check if got video
         if self.video_capture is None:
@@ -100,9 +100,9 @@ class VID2ASCIIConverter:
 
         i = 0
 
-        while ret:
-            t0 = time.time()
+        t0 = time.time()
 
+        while ret:
             # Get grayscale frame, and convert to ASCII image
             gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             self.image_to_ascii_converter.set_image_by_array(gray_frame)
@@ -112,17 +112,16 @@ class VID2ASCIIConverter:
 
             # Save to frame buffer, and update time in 5 cycle moving average of time taken
             self.converter_video_frames_buffer[i % self.VIDEO_WRITER_REPEAT_CYCLE] = self.image_to_ascii_converter.ascii_image_array
-            self.previous_five_time[i % self.MOVING_AVERAGE_COUNT] = time.time() - t0
 
             # Every fifty cycle append frame to output video, then clear buffer
-            if i % self.VIDEO_WRITER_REPEAT_CYCLE == 49:
+            if i % self.VIDEO_WRITER_REPEAT_CYCLE == (self.VIDEO_WRITER_REPEAT_CYCLE - 1):
                 for frame in self.converter_video_frames_buffer:
                     self.append_frames_to_output(frame, not is_gif)
                 self.converter_video_frames_buffer = [None] * self.VIDEO_WRITER_REPEAT_CYCLE
 
             # Print out info of frame
             i += 1
-            print(f"{bcolors.WARNING}[!] Frame {i} out of {self.total_frame_count} completed. About {np.mean(self.previous_five_time) * (self.total_frame_count - i):.2f}s to go! ඞ {bcolors.ENDC}")
+            print(f"{bcolors.WARNING}[!] Frame {i} out of {self.total_frame_count} completed. About {((time.time() - t0) / i) * (self.total_frame_count - i):.2f}s to go! ඞ {bcolors.ENDC}")
 
             # Load next video frame
             ret, frame = self.video_capture.read()
@@ -138,8 +137,8 @@ class VID2ASCIIConverter:
         
         self.video_writer.close()
 
-        if not is_gif:
-            self.add_original_audio()
+        if not is_gif and add_original_audio:
+            self.add_original_audio(compression_speed=compression_speed)
 
         return True
 
@@ -164,17 +163,28 @@ class VID2ASCIIConverter:
         Create video writer, shouldn't be called outside of class.
         """
         if write_as_temp:
-            self.video_writer = imageio.get_writer(self.temp_video_output_path, fps=self.fps, codec='libx265')
+            self.video_writer = imageio.get_writer(self.temp_video_output_path, fps=self.fps)
         else:
-            self.video_writer = imageio.get_writer(self.video_output_path, fps=self.fps, codec='libx265')
+            self.video_writer = imageio.get_writer(self.video_output_path, fps=self.fps)
 
-    def add_original_audio(self, del_temp=True):
-        print(f"{bcolors.WARNING}[!] Adding audio to video file of path {self.video_output_path} ◑﹏◐ {bcolors.ENDC}\n")
+    def add_original_audio(self, del_temp:bool=True, compression_speed: str="slower"):
+        """
+        Adds original audio to video.
+        """
+        # Check if compression speed is actually correct, else default to veryslow,
+        # which I think is a good enough speed for a good enouh compression rate
+        if compression_speed.lower() not in ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow", "placebo"]:
+            compression_speed = "veryslow"
+
+        print(f"{bcolors.WARNING}[!] Adding audio to video file of path {self.video_output_path} -.- {bcolors.ENDC}\n")
+
+        if compression_speed.lower() in ["veryslow", "placebo"]:
+            print(f"{bcolors.WARNING}[!] It will be damn slow for compression, if you don't feel like waiting try change the speed up a bit o((>w< ))o {bcolors.ENDC}\n")
 
         video_clip = VideoFileClip(self.temp_video_output_path)
         audio_clip = AudioFileClip(self.video_path)
         video_clip = video_clip.set_audio(audio_clip)
-        video_clip.write_videofile(self.video_output_path, ffmpeg_params=['-crf', '24'])
+        video_clip.write_videofile(self.video_output_path, preset=compression_speed.lower())
 
         if del_temp:
             os.remove(self.temp_video_output_path)
@@ -185,8 +195,8 @@ if __name__ == "__main__":
     t0 = time.time()
 
     converter = VID2ASCIIConverter()
-    # converter.set_video("ඞ.mp4")
+    converter.set_video("a.mp4")
     converter.init_image_to_ascii_converter(200, 200)
-    converter.create_video()
+    converter.create_video(compression_speed="placebo")  
 
     print(f"{bcolors.WARNING}Wow all that took {(time.time() - t0):.2f}s {bcolors.ENDC}\n")

@@ -144,7 +144,7 @@ class IMG2ASCIIConverter:
         """
         # Check if image_array exists
         if self.image_array is None:
-            print(f"{bcolors.WARNING}[!] No image has been set yet ಥ_ಥ {bcolors.ENDC}\n")
+            print(f"{bcolors.WARNING}[!] No image has been set yet /_ \ {bcolors.ENDC}\n")
             return
 
         # Scale image by `font_width_to_height_ratio` because ASCII chars are not of same width and height
@@ -172,7 +172,6 @@ class IMG2ASCIIConverter:
 
         return self.ascii_image_array
         
-
     def create_text(self, gscale_level: int=0, max_bit_value: int=256, min_bit_value: int=0):
         """
         Set `self.image_ascii_chars` to the ASCII characters created from `self.image_array` and return it.
@@ -221,7 +220,7 @@ class IMG2ASCIIConverter:
         with open(text_file_path, mode='w') as f:
             f.write(self.image_ascii_chars)
 
-        print(f"{bcolors.WARNING}[+] Finished writing to text file of path {text_file_path} ·▽· {bcolors.ENDC}\n")
+        print(f"{bcolors.WARNING}[+] Finished writing to text file of path {text_file_path} ·v· {bcolors.ENDC}\n")
 
         return True
 
@@ -310,7 +309,7 @@ class IMG2ASCIIConverter:
         
         # Check if there is anything to write
         if self.ascii_image_array is None:
-            print(f"{bcolors.WARNING}[!] Nothing to write when saving image, try create image first ╯︿╰ {bcolors.ENDC}\n")
+            print(f"{bcolors.WARNING}[!] Nothing to write when saving image, try create image first /^\ {bcolors.ENDC}\n")
             return False
 
         print(f"{bcolors.WARNING}[!] Writing to image file of path {image_file_path} :3 {bcolors.ENDC}\n")
@@ -318,10 +317,10 @@ class IMG2ASCIIConverter:
         try:
             cv2.imwrite(image_file_path, self.ascii_image_array)
         except:
-            print(f"{bcolors.WARNING}[-] Something went wrong when writing image, and I don't know why 𓁹‿𓁹 {bcolors.ENDC}\n")
+            print(f"{bcolors.WARNING}[-] Something went wrong when writing image, and I don't know why UwU {bcolors.ENDC}\n")
             return False
 
-        print(f"{bcolors.WARNING}[+] Finished writing to image file of path {image_file_path} ·▽· {bcolors.ENDC}\n")
+        print(f"{bcolors.WARNING}[+] Finished writing to image file of path {image_file_path} ·w· {bcolors.ENDC}\n")
         
         return True
 
@@ -329,7 +328,7 @@ if __name__ == "__main__":
     t0 = time.time()
 
     converter = IMG2ASCIIConverter()
-    # converter.set_image("ඞ.png")
+    converter.set_image("a.png")  # Set file path here, or use set_image_by_array
     converter.set_ascii_chars_count(200, 200)
     converter.scale_image()
     converter.create_text()
